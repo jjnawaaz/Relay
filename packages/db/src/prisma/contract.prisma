@@ -1,0 +1,11 @@
+// use prisma-8
+
+model User {
+  id        String      @id @default(uuid())
+  email     String      @unique
+  name      String
+  password  String
+  createdAt TimestamptzString @default(now())
+  updatedAt temporal.updatedAtString()
+}
+
