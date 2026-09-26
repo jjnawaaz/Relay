@@ -5,6 +5,7 @@ import "dotenv/config";
 
 // import routes
 import userRoutes from "./routes/userRoutes.js";
+import roomRoutes from "./routes/roomRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 
 const app = express();
@@ -23,6 +24,7 @@ app.use(express.json());
 
 //ALL ROUTES
 app.use("/user", userRoutes);
+app.use("/room", roomRoutes);
 
 // health
 app.get("/health", (req: Request, res: Response) => {

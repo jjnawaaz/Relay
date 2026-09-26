@@ -77,6 +77,6 @@ export const authHandler = (
     new_refresh_token,
     access_token_options as CookieOptions,
   );
-  req.user = refresh_decoded.tokenData as JwtPayload;
+  req.user = refresh_decoded.tokenData;
   next();
 };
