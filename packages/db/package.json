@@ -7,20 +7,23 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "contract:emit": "prisma contract emit",
-    "db:init": "prisma db init",
-    "db:update": "prisma db update",
-    "db:verify": "prisma db verify",
-    "db:seed": "bun src/prisma/seed.ts"
+  "db:generate": "prisma generate",
+  "db:validate": "prisma validate",
+  "db:migrate": "prisma migrate dev",
+  "db:migrate:deploy": "prisma migrate deploy",
+  "db:status": "prisma migrate status",
+  "db:studio":"prisma studio",
+  "db:seed": "bun prisma/seed.ts"
   },
   "dependencies": {
-    "@prisma/orm-postgres": "^8.0.0-rc.11",
-    "dotenv": "^18.0.3"
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "7",
+    "dotenv": "^18.0.3",
+    "pg": "^8.23.0"
   },
   "devDependencies": {
-    "@prisma/cli-engine": "0.4.0",
     "@types/node": "^26.6.2",
-    "prisma": "^8.0.0-rc.15",
+    "prisma": "7",
     "tsx": "^4.23.15"
   }
 }
