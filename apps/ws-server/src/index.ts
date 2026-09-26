@@ -1,8 +1,8 @@
-import express from "express";
+import express, { Request } from "express";
 import cors from "cors";
-import cookieParser from "cookie-parser";
 import { WebSocketServer } from "ws";
 import "dotenv/config";
+import { authHandler } from "./middlewares/authHandler.js";
 
 // setup redux store
 
@@ -10,18 +10,21 @@ import "dotenv/config";
 const app = express();
 const httpServer = app.listen(process.env.PORT);
 
-// cookie parser
-app.use(cookieParser());
-
 // cors
 app.use(cors());
 
 // setup ws
 const wss = new WebSocketServer({ server: httpServer });
 
-wss.on("connection", (socket) => {
-  socket.on("message", (data) => {
+wss.on("connection", (socket, req: Request) => {
+  // validate jwt here
+  authHandler(req, socket);
+  socket.on("message", (data, req) => {
     socket.send(data.toString());
-    console.log(data.toString());
+  });
+
+  // close socket for unauthenticated users
+  socket.on("close", (code, reason) => {
+    console.log("Socket actually closed:", code, reason.toString());
   });
 });
