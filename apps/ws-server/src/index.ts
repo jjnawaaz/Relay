@@ -4,6 +4,11 @@ import { WebSocketServer } from "ws";
 import type { IncomingMessage } from "node:http";
 import "dotenv/config";
 import { authHandler_v1 } from "./middlewares/authHandler.js";
+import { roomController } from "./controllers/roomController.js";
+import { SocketData } from "./types/socketType.js";
+import { chatController } from "./controllers/chatController.js";
+import { leaveController } from "./controllers/leaveController.js";
+import { messageController } from "./controllers/messageController.js";
 
 // setup redux store
 
@@ -16,16 +21,6 @@ app.use(cors());
 
 // setup ws
 const wss = new WebSocketServer({ server: httpServer });
-
-type SocketData =
-  | {
-      type: "join-room";
-      roomId: number;
-    }
-  | {
-      type: "chat";
-      message: string;
-    };
 
 // web socket server
 wss.on("connection", async (socket, req: IncomingMessage) => {
@@ -48,24 +43,10 @@ wss.on("connection", async (socket, req: IncomingMessage) => {
       parsedData = JSON.parse(data.toString()) as SocketData;
       // continue processing
     } catch (err) {
-      console.log("Invalid JSON received");
       socket.send("Invalid message format");
       return;
     }
-
-    // join-room
-    if (parsedData.type === "join-room") {
-      console.log("Joined Room");
-      socket.send("User joined");
-    } // chat
-    else if (parsedData.type === "chat") {
-      console.log("Sent chat");
-      socket.send(parsedData.message);
-    } // wrong messages disconnect user
-    else {
-      socket.send("invalid message");
-      socket.close();
-    }
+    messageController(parsedData, socket);
   });
 
   // close socket for unauthenticated users
