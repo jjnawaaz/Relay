@@ -1,11 +1,9 @@
 import { SigninType, SignupType } from "@repo/api_contracts";
 import { createHash, verifyHash } from "../utils/bcryptUtils.js";
-import prisma from "@repo/db";
+import { prisma } from "@repo/db";
 import { ERROR_CODES, httpStatusCodes } from "@repo/codes";
 import { AppError } from "../middlewares/errorHandler.js";
 import { isDuplicateError } from "../utils/errorUtils.js";
-import { JwtData } from "../utils/jwtUtils.js";
-import { JwtPayload } from "jsonwebtoken";
 
 export const SignUpService = async (data: SignupType) => {
   // check if the user exists
@@ -86,10 +84,11 @@ export const CreateRoomService = async (user: any, room_data: any) => {
       room_name: room.room_name,
     };
   } catch (err: unknown) {
+    console.log(err);
     if (isDuplicateError(err)) {
       throw new AppError(
         "Room already exists",
-        ERROR_CODES.USER_ALREADY_EXISTS,
+        ERROR_CODES.ROOM_ALREADY_EXISTS,
         httpStatusCodes.CONFLICT,
       );
     }
