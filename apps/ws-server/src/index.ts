@@ -17,6 +17,17 @@ app.use(cors());
 // setup ws
 const wss = new WebSocketServer({ server: httpServer });
 
+type SocketData =
+  | {
+      type: "join-room";
+      roomId: number;
+    }
+  | {
+      type: "chat";
+      message: string;
+    };
+
+// web socket server
 wss.on("connection", async (socket, req: IncomingMessage) => {
   // validate jwt here
   const isValid = await authHandler_v1(req);
@@ -30,8 +41,31 @@ wss.on("connection", async (socket, req: IncomingMessage) => {
   }
 
   // tokens are valid
-  socket.on("message", (data, req) => {
-    socket.send(data.toString());
+  socket.on("message", (data) => {
+    // check type of room
+    let parsedData;
+    try {
+      parsedData = JSON.parse(data.toString()) as SocketData;
+      // continue processing
+    } catch (err) {
+      console.log("Invalid JSON received");
+      socket.send("Invalid message format");
+      return;
+    }
+
+    // join-room
+    if (parsedData.type === "join-room") {
+      console.log("Joined Room");
+      socket.send("User joined");
+    } // chat
+    else if (parsedData.type === "chat") {
+      console.log("Sent chat");
+      socket.send(parsedData.message);
+    } // wrong messages disconnect user
+    else {
+      socket.send("invalid message");
+      socket.close();
+    }
   });
 
   // close socket for unauthenticated users
