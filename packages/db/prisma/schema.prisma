@@ -24,7 +24,7 @@ model User {
 
 model Room {
   id          Int         @id @default(autoincrement())
-  room_name   String
+  room_name   String      @unique
   adminId     String
   admin       User        @relation("RoomAdmin", fields: [adminId], references: [id])
   users       User[]      @relation("RoomMembers")                    
