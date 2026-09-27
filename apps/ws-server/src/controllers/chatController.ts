@@ -14,4 +14,5 @@ export const chatController = (
   ROOMS.get(roomId)?.forEach((socket) => {
     socket.send(message);
   });
+  return;
 };
