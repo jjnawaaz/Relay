@@ -37,10 +37,8 @@ export const deleteRoom = async (req: Request, res: Response) => {
   const user = req.user;
   // check room data
   const id = Number(req.params.id);
-  console.log(typeof id);
   const parsedData = deleteRoomSchema.safeParse({ id });
   if (!parsedData.success) {
-    console.log(parsedData);
     return res.status(httpStatusCodes.BAD_REQUEST).json({
       message: "Please enter valid fields",
     });
