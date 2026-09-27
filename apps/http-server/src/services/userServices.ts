@@ -105,7 +105,6 @@ export const DeleteRoomService = async (user: any, room_id: any) => {
       id: room_id,
     },
   });
-  console.log(isValid);
   if (isValid) {
     try {
       await prisma.room.delete({
