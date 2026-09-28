@@ -70,6 +70,7 @@
         "ws": "^8.21.3",
       },
       "devDependencies": {
+        "@repo/api_contracts": "workspace:*",
         "@repo/codes": "workspace:*",
         "@repo/db": "workspace:*",
         "@repo/redis": "workspace:*",
