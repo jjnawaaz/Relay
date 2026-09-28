@@ -9,7 +9,7 @@ import { SocketData } from "./types/socketType.js";
 import { chatController } from "./controllers/chatController.js";
 import { leaveController } from "./controllers/leaveController.js";
 import { messageController } from "./controllers/messageController.js";
-
+import { SocketDataSchema } from "@repo/api_contracts";
 // setup redux store
 
 // setup express
@@ -46,7 +46,12 @@ wss.on("connection", async (socket, req: IncomingMessage) => {
       socket.send("Invalid message format");
       return;
     }
-    messageController(parsedData, socket);
+    parsedData = SocketDataSchema.safeParse(parsedData);
+    if (!parsedData.success) {
+      socket.send("Invalid message format");
+      return;
+    }
+    messageController(parsedData.data, socket);
   });
 
   // close socket for unauthenticated users
