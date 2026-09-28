@@ -2,15 +2,11 @@ import express from "express";
 import cors from "cors";
 import { WebSocketServer } from "ws";
 import type { IncomingMessage } from "node:http";
-import "dotenv/config";
 import { authHandler_v1 } from "./middlewares/authHandler.js";
-import { roomController } from "./controllers/roomController.js";
 import { SocketData } from "./types/socketType.js";
-import { chatController } from "./controllers/chatController.js";
-import { leaveController } from "./controllers/leaveController.js";
 import { messageController } from "./controllers/messageController.js";
 import { SocketDataSchema } from "@repo/api_contracts";
-// setup redux store
+import "dotenv/config";
 
 // setup express
 const app = express();
@@ -26,13 +22,15 @@ const wss = new WebSocketServer({ server: httpServer });
 wss.on("connection", async (socket, req: IncomingMessage) => {
   // validate jwt here
   const isValid = await authHandler_v1(req);
-  if (!isValid.success && isValid.reason === "AUTHENTICATION_FAILED") {
-    socket.send("Authentication Failed");
+  if (!isValid.success) {
+    socket.send(
+      isValid.reason === "ACCESS_TOKEN_EXPIRED"
+        ? "Access Token Expired"
+        : "Authentication Failed",
+    );
+
     socket.close();
-  }
-  if (!isValid.success && isValid.reason === "ACCESS_TOKEN_EXPIRED") {
-    socket.send("Access Token Expired");
-    socket.close();
+    return;
   }
 
   // tokens are valid
@@ -51,7 +49,7 @@ wss.on("connection", async (socket, req: IncomingMessage) => {
       socket.send("Invalid message format");
       return;
     }
-    messageController(parsedData.data, socket);
+    messageController(isValid.userId, parsedData.data, socket);
   });
 
   // close socket for unauthenticated users
