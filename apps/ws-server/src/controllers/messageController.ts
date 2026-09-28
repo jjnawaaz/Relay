@@ -1,10 +1,10 @@
 import WebSocket from "ws";
-import { SocketData } from "../types/socketType.js";
 import { roomController } from "./roomController.js";
 import { chatController } from "./chatController.js";
 import { leaveController } from "./leaveController.js";
+import { SocketDataType } from "@repo/api_contracts";
 
-export const messageController = (data: SocketData, socket: WebSocket) => {
+export const messageController = (data: SocketDataType, socket: WebSocket) => {
   // message controller
   switch (data.type) {
     case "join-room":
