@@ -13,6 +13,7 @@
     "@repo/db": "workspace:*",
     "@repo/redis": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@repo/api_contracts":"workspace:*",
     "@types/bun": "latest",
     "@types/cookie": "^1.0.0",
     "@types/cors": "^2.8.19",
