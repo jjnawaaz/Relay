@@ -11,7 +11,7 @@
   <img src="https://img.shields.io/badge/TypeScript-7.0-3178C6?style=flat-square&logo=typescript&logoColor=white" />
   <img src="https://img.shields.io/badge/Bun-1.4-F9F1E1?style=flat-square&logo=bun&logoColor=black" />
   <img src="https://img.shields.io/badge/Express-5-000000?style=flat-square&logo=express&logoColor=white" />
-  <img src="https://img.shields.io/badge/Prisma-8-2D3748?style=flat-square&logo=prisma&logoColor=white" />
+  <img src="https://img.shields.io/badge/Prisma-7-2D3748?style=flat-square&logo=prisma&logoColor=white" />
   <img src="https://img.shields.io/badge/Redis-Streams-DC382D?style=flat-square&logo=redis&logoColor=white" />
   <img src="https://img.shields.io/badge/Turborepo-2-EF4444?style=flat-square&logo=turborepo&logoColor=white" />
 </p>
@@ -23,7 +23,7 @@
 ```
 ┌─────────────┐       ┌──────────────┐       ┌───────────────┐
 │   Client    │──HTTP──▶  HTTP Server │──────▶│  PostgreSQL   │
-│  (Browser)  │       │  (Express 5) │       │  (Prisma 8)   │
+│  (Browser)  │       │  (Express 5) │       │  (Prisma 7)   │
 │             │──WS───▶  WS Server   │──────▶│               │
 └─────────────┘       │  (ws lib)    │       └───────────────┘
                       └──────┬───────┘
@@ -54,7 +54,7 @@ relay/
 │   └── web              # Frontend (WIP)
 │
 ├── packages/
-│   ├── db               # Prisma 8 client + schema + migrations
+│   ├── db               # Prisma 7 client + schema + migrations
 │   ├── redis            # Shared ioredis singleton
 │   ├── api_contracts    # Zod schemas (shared validation)
 │   ├── codes            # HTTP status & error codes
@@ -178,7 +178,7 @@ bun run dev          # starts all apps via Turborepo
 | Language | TypeScript 7 |
 | HTTP Framework | Express 5 |
 | WebSockets | `ws` library |
-| Database | PostgreSQL + Prisma 8 |
+| Database | PostgreSQL + Prisma 7 |
 | Message Queue | Redis Streams (ioredis) |
 | Auth | JWT (access + refresh tokens) + bcrypt |
 | Validation | Zod 4 |
