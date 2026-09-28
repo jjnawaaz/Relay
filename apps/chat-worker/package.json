@@ -1,0 +1,26 @@
+{
+  "name": "chat-worker",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build":"tsc -b",
+    "start":"tsc -c && node dist/index.js",
+    "dev":"tsx src/index.ts"
+  },
+  "devDependencies": {
+    "@repo/api_contracts": "workspace:*",
+    "@repo/codes": "workspace:*",
+    "@repo/db": "workspace:*",
+    "@repo/redis": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^7"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.4",
+    "tsx": "^4.23.15"
+  }
+}
