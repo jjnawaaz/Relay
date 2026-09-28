@@ -234,17 +234,17 @@ export type RoomOrderByWithRelationInput = {
 
 export type RoomWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  room_name?: string
   AND?: Prisma.RoomWhereInput | Prisma.RoomWhereInput[]
   OR?: Prisma.RoomWhereInput[]
   NOT?: Prisma.RoomWhereInput | Prisma.RoomWhereInput[]
-  room_name?: Prisma.StringFilter<"Room"> | string
   adminId?: Prisma.StringFilter<"Room"> | string
   createdAt?: Prisma.DateTimeFilter<"Room"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Room"> | Date | string
   admin?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   users?: Prisma.UserListRelationFilter
   chats?: Prisma.ChatListRelationFilter
-}, "id">
+}, "id" | "room_name">
 
 export type RoomOrderByWithAggregationInput = {
   id?: Prisma.SortOrder

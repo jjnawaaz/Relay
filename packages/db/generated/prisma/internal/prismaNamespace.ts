@@ -705,6 +705,7 @@ export type RoomScalarFieldEnum = (typeof RoomScalarFieldEnum)[keyof typeof Room
 
 export const ChatScalarFieldEnum = {
   id: 'id',
+  eventId: 'eventId',
   message: 'message',
   userId: 'userId',
   roomId: 'roomId',
