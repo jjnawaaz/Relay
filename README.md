@@ -1,159 +1,204 @@
-# Turborepo starter
+<p align="center">
+  <img src="https://img.shields.io/badge/Relay-Chat-7C3AED?style=for-the-badge&logo=wechat&logoColor=white" alt="Relay" />
+</p>
 
-This Turborepo starter is maintained by the Turborepo core team.
+<h1 align="center">⚡ Relay</h1>
+<p align="center">
+  <b>Real-time chat platform built with WebSockets, Redis Streams & Turborepo</b>
+</p>
 
-## Using this example
+<p align="center">
+  <img src="https://img.shields.io/badge/TypeScript-7.0-3178C6?style=flat-square&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/Bun-1.4-F9F1E1?style=flat-square&logo=bun&logoColor=black" />
+  <img src="https://img.shields.io/badge/Express-5-000000?style=flat-square&logo=express&logoColor=white" />
+  <img src="https://img.shields.io/badge/Prisma-8-2D3748?style=flat-square&logo=prisma&logoColor=white" />
+  <img src="https://img.shields.io/badge/Redis-Streams-DC382D?style=flat-square&logo=redis&logoColor=white" />
+  <img src="https://img.shields.io/badge/Turborepo-2-EF4444?style=flat-square&logo=turborepo&logoColor=white" />
+</p>
 
-Run the following command:
+---
 
-```sh
-npx create-turbo@latest
+## Architecture
+
+```
+┌─────────────┐       ┌──────────────┐       ┌───────────────┐
+│   Client    │──HTTP──▶  HTTP Server │──────▶│  PostgreSQL   │
+│  (Browser)  │       │  (Express 5) │       │  (Prisma 8)   │
+│             │──WS───▶  WS Server   │──────▶│               │
+└─────────────┘       │  (ws lib)    │       └───────────────┘
+                      └──────┬───────┘
+                             │ XADD
+                      ┌──────▼───────┐
+                      │    Redis     │
+                      │   Streams    │
+                      └──────┬───────┘
+                             │ XREADGROUP
+                      ┌──────▼───────┐
+                      │ Chat Worker  │──────▶ PostgreSQL
+                      │ (Consumer)   │        (batch persist)
+                      └──────────────┘
 ```
 
-## What's inside?
+**Flow:** Client authenticates via HTTP → connects over WebSocket → sends chat messages → WS server pushes events to **Redis Streams** → **Chat Worker** (consumer group) reads events and batch-persists them to PostgreSQL. This decouples real-time delivery from DB writes for high throughput.
 
-This Turborepo includes the following packages/apps:
+---
 
-### Apps and Packages
+## Monorepo Structure
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `@next/eslint-plugin-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+```
+relay/
+├── apps/
+│   ├── http-server      # REST API — auth, rooms (Express 5)
+│   ├── ws-server        # WebSocket server — real-time messaging
+│   ├── chat-worker      # Redis Streams consumer — persists chats to DB
+│   └── web              # Frontend (WIP)
+│
+├── packages/
+│   ├── db               # Prisma 8 client + schema + migrations
+│   ├── redis            # Shared ioredis singleton
+│   ├── api_contracts    # Zod schemas (shared validation)
+│   ├── codes            # HTTP status & error codes
+│   ├── eslint-config    # Shared ESLint config
+│   ├── typescript-config# Shared tsconfig
+│   └── ui               # Shared UI components (WIP)
+│
+├── turbo.json
+└── package.json
 ```
 
-Without global `turbo`, use your package manager:
+---
 
-```sh
-cd my-turborepo
-npx turbo build
-bun exec turbo build
-bun exec turbo build
+## Database Schema
+
+```prisma
+model User {
+  id, email (unique), name, password
+  → has many Chats, Rooms (member), Rooms (admin)
+}
+
+model Room {
+  id, room_name (unique), adminId
+  → belongs to admin User, has many members, has many Chats
+}
+
+model Chat {
+  id, eventId (unique — Redis stream ID), message, userId, roomId
+  → belongs to User, belongs to Room
+}
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+---
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+## API Reference
 
-```sh
-turbo build --filter=docs
+### HTTP Server (`apps/http-server`) — default port `3000`
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/user/signup` | ✗ | Register a new user |
+| `POST` | `/user/signin` | ✗ | Login, returns JWT tokens |
+| `POST` | `/user/refresh` | ✓ | Refresh access token |
+| `POST` | `/room/create-room` | ✓ | Create a chat room |
+| `GET` | `/room/get-room` | ✗ | List all rooms |
+| `DELETE` | `/room/delete-room/:id` | ✓ | Delete a room |
+| `GET` | `/health` | ✗ | Health check |
+
+### WebSocket Server (`apps/ws-server`) — default port `8080`
+
+Connect with JWT token in cookie. Messages are JSON:
+
+```jsonc
+// Join a room
+{ "type": "join-room", "roomId": 1 }
+
+// Send a message
+{ "type": "chat", "roomId": 1, "message": "Hello!" }
+
+// Leave a room
+{ "type": "leave-room", "roomId": 1 }
 ```
 
-Without global `turbo`:
+### Chat Worker (`apps/chat-worker`)
 
-```sh
-npx turbo build --filter=docs
-bun exec turbo build --filter=docs
-bun exec turbo build --filter=docs
+Background process — no external API. Consumes from Redis stream `chat-events` using consumer group `chat-workers`, persists to PostgreSQL, and acknowledges processed messages.
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- **Bun** ≥ 1.4
+- **Node.js** ≥ 24
+- **PostgreSQL** running locally
+- **Redis** running locally
+
+### Setup
+
+```bash
+# 1. Clone & install
+git clone <repo-url> && cd relay
+bun install
+
+# 2. Configure environment
+#    Copy and edit .env in each app:
+#    - apps/http-server/.env
+#    - apps/ws-server/.env
+#    - apps/chat-worker/.env
+#    - packages/db/.env
+
+# 3. Setup database
+cd packages/db
+bunx prisma migrate dev
+bunx prisma generate
+cd ../..
+
+# 4. Run everything
+bun run dev          # starts all apps via Turborepo
 ```
 
-### Develop
+### Environment Variables
 
-To develop all apps and packages, run the following command:
+| Variable | Used By | Example |
+|----------|---------|---------|
+| `PORT` | http-server, ws-server | `3000`, `8080` |
+| `DATABASE_URL` | db package | `postgresql://user:pass@localhost:5432/relay` |
+| `redisUrl` | redis package | `redis://localhost:6379` |
+| `JWT_ACCESS_SECRET` | http-server, ws-server | `your-secret` |
+| `JWT_REFRESH_SECRET` | http-server | `your-secret` |
+| `NODE_ENV` | all | `development` |
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+---
 
-```sh
-cd my-turborepo
-turbo dev
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Runtime | Bun 1.4 / Node.js 24 |
+| Language | TypeScript 7 |
+| HTTP Framework | Express 5 |
+| WebSockets | `ws` library |
+| Database | PostgreSQL + Prisma 8 |
+| Message Queue | Redis Streams (ioredis) |
+| Auth | JWT (access + refresh tokens) + bcrypt |
+| Validation | Zod 4 |
+| Monorepo | Turborepo 2 + Bun workspaces |
+
+---
+
+## Scripts
+
+```bash
+bun run dev          # Start all apps in dev mode
+bun run build        # Build all packages
+bun run lint         # Lint everything
+bun run format       # Prettier format
+bun run check-types  # Type-check all packages
 ```
 
-Without global `turbo`, use your package manager:
+---
 
-```sh
-cd my-turborepo
-npx turbo dev
-bun exec turbo dev
-bun exec turbo dev
-```
+## License
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+MIT
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-bun exec turbo dev --filter=web
-bun exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-bun exec turbo login
-bun exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-bun exec turbo link
-bun exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
