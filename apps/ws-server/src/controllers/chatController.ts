@@ -1,6 +1,8 @@
 import WebSocket from "ws";
 import { ROOMS } from "../store/rooms.js";
-import { redis } from "@repo/redis";
+import { publisher, redis, subscriber } from "@repo/redis";
+import { WS_SERVER_ID } from "../index.js";
+
 export const chatController = async (
   userId: string,
   roomId: number,
@@ -12,8 +14,10 @@ export const chatController = async (
     socket.send("User doesn't exist in the room");
     return;
   }
+
+  // check if there is any publisher for this room if not create it here
   // call save db worker here
-  const sendData = await redis.xadd(
+  await redis.xadd(
     "chat-events",
     "*",
     "id",
@@ -23,7 +27,20 @@ export const chatController = async (
     "roomId",
     roomId.toString(),
   );
-  // send it to other ws servers. pub - sub
+  const payload = {
+    userId: userId,
+    roomId: roomId,
+    message: message,
+    serverId: WS_SERVER_ID,
+  };
+
+  // channel
+  const channel = `chat:room:${roomId}`;
+
+  // publish message to others as well
+  await publisher.publish(channel, JSON.stringify(payload));
+
+  // subscriber message
 
   // send messages to users in this ws - server
   ROOMS.get(roomId)?.forEach((socket) => {

@@ -7,6 +7,9 @@ import { SocketData } from "./types/socketType.js";
 import { messageController } from "./controllers/messageController.js";
 import { SocketDataSchema } from "@repo/api_contracts";
 import "dotenv/config";
+import { randomUUID } from "node:crypto";
+import { subscriber } from "@repo/redis";
+import { ROOMS } from "./store/rooms.js";
 
 // setup express
 const app = express();
@@ -17,6 +20,21 @@ app.use(cors());
 
 // setup ws
 const wss = new WebSocketServer({ server: httpServer });
+
+// generate websocket server unique Id
+export const WS_SERVER_ID = randomUUID();
+
+// get subscribed messages here from pub subs and business logic to send messages
+subscriber.on("message", async (channel, string) => {
+  // get all the messages
+  const payloadData = JSON.parse(string);
+
+  if (payloadData.serverId === WS_SERVER_ID) return;
+  ROOMS.get(payloadData.roomId)?.forEach((socket) => {
+    socket.send(payloadData.message);
+  });
+  return;
+});
 
 // web socket server
 wss.on("connection", async (socket, req: IncomingMessage) => {
@@ -52,7 +70,7 @@ wss.on("connection", async (socket, req: IncomingMessage) => {
     messageController(isValid.userId, parsedData.data, socket);
   });
 
-  // close socket for unauthenticated users
+  // close socket
   socket.on("close", (code, reason) => {
     if (code === 1005) {
       console.log("Socket actually closed:", code, "Authentication Failed");
