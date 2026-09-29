@@ -9,6 +9,7 @@ import {
 } from "../utils/jwtUtils.js";
 import { SignInService, SignUpService } from "../services/userServices.js";
 import { redis } from "@repo/redis";
+
 export const signUp = async (req: Request, res: Response) => {
   // validate the data
   const parsedData = SignupSchema.safeParse(req.body);
@@ -58,9 +59,10 @@ export const signIn = async (req: Request, res: Response) => {
     message: "User successfully Signed In",
   });
 };
-export const Refresh = (req: Request, res: Response) => {
-  const data = req.user;
+
+export const refreshToken = (_req: Request, res: Response) => {
   return res.json({
-    data: data,
+    message: "User refreshed successfully",
+    success: true,
   });
 };

@@ -66,7 +66,7 @@ export const authHandler = (
   }
 
   // create new token
-  const new_refresh_token = createToken(
+  const new_access_token = createToken(
     refresh_decoded as JwtData,
     TOKEN.ACCESS_TOKEN,
   );
@@ -74,7 +74,7 @@ export const authHandler = (
   // set access token to cookie
   res.cookie(
     "access_token",
-    new_refresh_token,
+    new_access_token,
     access_token_options as CookieOptions,
   );
   req.user = refresh_decoded.tokenData;
