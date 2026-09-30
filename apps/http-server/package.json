@@ -4,9 +4,9 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "dev": "tsx src/server.ts",
     "build": "tsc -b",
-    "start": "tsc -c && node dist/index.js",
-    "dev": "tsx src/index.ts"
+    "start": "node dist/server.js"
   },
   "devDependencies": {
     "@types/bun": "latest",

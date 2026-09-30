@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import cookieparser from "cookie-parser";
 import "dotenv/config";
@@ -8,7 +8,7 @@ import userRoutes from "./routes/userRoutes.js";
 import roomRoutes from "./routes/roomRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 
-const app = express();
+const app: Express = express();
 
 // PORT
 const PORT = process.env.PORT;
@@ -34,7 +34,4 @@ app.get("/health", (_req: Request, res: Response) => {
 // error handler middleware
 app.use(errorHandler);
 
-// start server
-app.listen(PORT, () => {
-  console.log("HTTP Server Started");
-});
+export default app;
