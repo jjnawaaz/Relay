@@ -17,8 +17,8 @@ export function Navbar() {
     <header className="absolute inset-x-0 top-0 z-50">
       <nav className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
         {/* Logo */}
-        <a
-          href="/"
+        <Link
+          to="/"
           className="relative z-50 flex items-center gap-2"
           onClick={closeMenu}
         >
@@ -27,10 +27,16 @@ export function Navbar() {
           </div>
 
           <span className="text-xl font-semibold tracking-tight">Relay</span>
-        </a>
+        </Link>
 
         {/* Desktop navigation */}
         <div className="hidden items-center gap-3 md:flex">
+          <Button
+            variant="ghost"
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <Link to="/dashboard">Dashboard</Link>
+          </Button>
           <Button
             variant="ghost"
             className="text-muted-foreground hover:text-foreground"
@@ -159,6 +165,12 @@ export function Navbar() {
       "
           >
             <div className="flex flex-col gap-2">
+              <Button
+                variant="ghost"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Link to="/dashboard">Dashboard</Link>
+              </Button>
               <Button
                 variant="ghost"
                 className="h-12 justify-center text-base shadow-none"
