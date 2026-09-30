@@ -21,6 +21,10 @@ app.use(cors());
 // setup ws
 const wss = new WebSocketServer({ server: httpServer });
 
+app.get("/health", (req, res) => {
+  res.send("WS server is good ");
+});
+
 // generate websocket server unique Id
 export const WS_SERVER_ID = randomUUID();
 
