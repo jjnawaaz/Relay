@@ -116,6 +116,12 @@ wss.on("connection", (socket) => {
 
     const userId = isValid.userId;
 
+    socket.send(
+      JSON.stringify({
+        type: "AUTH_SUCCESS",
+      }),
+    );
+
     socket.on("message", (data) => {
       let parsedData: unknown;
 
