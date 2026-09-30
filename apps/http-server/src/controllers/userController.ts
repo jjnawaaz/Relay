@@ -59,6 +59,15 @@ export const signIn = async (req: Request, res: Response) => {
   });
 };
 
+export const logout = (_req: Request, res: Response) => {
+  res.clearCookie("access_token", access_token_options);
+  res.clearCookie("refresh_token", refresh_token_options);
+
+  return res.status(httpStatusCodes.OK).json({
+    message: "Logged out successfully",
+  });
+};
+
 export const refreshToken = (req: Request, res: Response) => {
   const access_token = createToken(req.user as JwtData, TOKEN.ACCESS_TOKEN);
   return res.json({
