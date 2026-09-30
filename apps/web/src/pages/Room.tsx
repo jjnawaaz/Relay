@@ -1,40 +1,214 @@
 import { ArrowLeft, Send, Users } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const messages = [
-  {
-    id: 1,
-    user: "Alex",
-    message: "Hey everyone 👋",
-    time: "3:12 PM",
-  },
-  {
-    id: 2,
-    user: "Sarah",
-    message: "Hey! How's everyone doing?",
-    time: "3:13 PM",
-  },
-  {
-    id: 3,
-    user: "Alex",
-    message: "Pretty good! Just working on a new project.",
-    time: "3:14 PM",
-  },
-];
+type Message = {
+  id: number;
+  user: string;
+  message: string;
+  time: string;
+};
 
 export function Room() {
   const { roomId } = useParams();
 
-  const roomName = roomId
-    ? roomId.charAt(0).toUpperCase() + roomId.slice(1)
-    : "Room";
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [messageInput, setMessageInput] = useState("");
+
+  const [isConnected, setIsConnected] = useState(false);
+  const [isInRoom, setIsInRoom] = useState(false);
+
+  const socketRef = useRef<WebSocket | null>(null);
+  const isInRoomRef = useRef(false);
+
+  const numericRoomId = Number(roomId);
+
+  useEffect(() => {
+    if (!roomId || Number.isNaN(numericRoomId)) {
+      return;
+    }
+
+    const token = sessionStorage.getItem("accessToken");
+
+    if (!token) {
+      console.error("No access token found");
+      return;
+    }
+
+    const socket = new WebSocket(import.meta.env.VITE_WS_URL);
+
+    socketRef.current = socket;
+
+    socket.onopen = () => {
+      setIsConnected(true);
+
+      socket.send(
+        JSON.stringify({
+          type: "AUTH",
+          token,
+        }),
+      );
+    };
+
+    socket.onmessage = (event) => {
+      const rawMessage = event.data.toString();
+
+      try {
+        const data = JSON.parse(rawMessage);
+
+        if (data.type === "AUTH_SUCCESS") {
+          if (socket.readyState !== WebSocket.OPEN) {
+            console.error("Cannot join room because WebSocket is not open");
+            return;
+          }
+
+          socket.send(
+            JSON.stringify({
+              type: "join-room",
+              roomId: numericRoomId,
+            }),
+          );
+
+          return;
+        }
+
+        if (data.type === "TOKEN_EXPIRING") {
+          return;
+        }
+      } catch {
+        // Plain text messages are handled below.
+      }
+
+      if (rawMessage === "Authentication required") {
+        console.error("Authentication required");
+        socket.close();
+        return;
+      }
+
+      if (rawMessage === "Authentication Failed") {
+        console.error("Authentication failed");
+        socket.close();
+        return;
+      }
+
+      if (rawMessage === "Access Token Expired") {
+        console.error("Access token expired");
+        socket.close();
+        return;
+      }
+
+      if (
+        rawMessage === "User added to room" ||
+        rawMessage === "User already exists in room"
+      ) {
+        setIsInRoom(true);
+        isInRoomRef.current = true;
+        return;
+      }
+
+      if (
+        rawMessage === "User left room" ||
+        rawMessage === "User doesnt exists in room" ||
+        rawMessage === "User doesn't exist in the room"
+      ) {
+        return;
+      }
+
+      if (
+        rawMessage === "invalid message" ||
+        rawMessage === "Invalid message format"
+      ) {
+        console.error(rawMessage);
+        return;
+      }
+
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        {
+          id: Date.now(),
+          user: "User",
+          message: rawMessage,
+          time: new Date().toLocaleTimeString([], {
+            hour: "numeric",
+            minute: "2-digit",
+          }),
+        },
+      ]);
+    };
+
+    socket.onerror = (error) => {
+      console.error("WebSocket error:", error);
+    };
+
+    socket.onclose = () => {
+      setIsConnected(false);
+      setIsInRoom(false);
+      isInRoomRef.current = false;
+
+      if (socketRef.current === socket) {
+        socketRef.current = null;
+      }
+    };
+
+    return () => {
+      if (socket.readyState === WebSocket.OPEN && isInRoomRef.current) {
+        socket.send(
+          JSON.stringify({
+            type: "leave-room",
+            roomId: numericRoomId,
+          }),
+        );
+      }
+
+      isInRoomRef.current = false;
+
+      socket.close();
+
+      if (socketRef.current === socket) {
+        socketRef.current = null;
+      }
+    };
+  }, [roomId, numericRoomId]);
+
+  const handleSendMessage = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const message = messageInput.trim();
+
+    if (!message) {
+      return;
+    }
+
+    const socket = socketRef.current;
+
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      console.error("WebSocket is not connected");
+      return;
+    }
+
+    if (!isInRoom) {
+      console.error("User has not joined the room");
+      return;
+    }
+
+    socket.send(
+      JSON.stringify({
+        type: "chat",
+        roomId: numericRoomId,
+        message,
+      }),
+    );
+
+    setMessageInput("");
+  };
+
+  const roomName = roomId ? `Room ${roomId}` : "Room";
 
   return (
     <main className="flex min-h-screen flex-col bg-background text-foreground">
-      {/* Room header */}
       <header className="border-b border-border">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
           <div className="flex items-center gap-3">
@@ -49,7 +223,14 @@ export function Room() {
 
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Users className="size-3.5" />
-                128 members
+
+                <span>
+                  {!isConnected
+                    ? "Connecting..."
+                    : !isInRoom
+                      ? "Joining room..."
+                      : "Connected"}
+                </span>
               </div>
             </div>
           </div>
@@ -60,13 +241,12 @@ export function Room() {
         </div>
       </header>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto">
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 px-6 py-8">
           {messages.map((message) => (
             <div key={message.id} className="flex gap-3">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-sm font-semibold text-accent">
-                {message.user.charAt(0)}
+                {message.user.charAt(0).toUpperCase()}
               </div>
 
               <div>
@@ -87,18 +267,24 @@ export function Room() {
         </div>
       </div>
 
-      {/* Message input */}
       <div className="border-t border-border bg-background">
         <div className="mx-auto w-full max-w-4xl px-6 py-4">
-          <form className="flex items-center gap-3">
+          <form
+            onSubmit={handleSendMessage}
+            className="flex items-center gap-3"
+          >
             <Input
-              placeholder={`Message #${roomName?.toLowerCase()}`}
+              value={messageInput}
+              onChange={(event) => setMessageInput(event.target.value)}
+              placeholder={`Message ${roomName.toLowerCase()}`}
+              disabled={!isInRoom}
               className="h-12 rounded-xl"
             />
 
             <Button
               type="submit"
               size="icon"
+              disabled={!isInRoom || !messageInput.trim()}
               className="size-12 shrink-0 rounded-xl"
             >
               <Send className="size-5" />
