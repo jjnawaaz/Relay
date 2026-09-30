@@ -1,36 +1,27 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
 
-export enum TOKEN {
-  ACCESS_TOKEN,
-  REFRESH_TOKEN,
-}
-
 type VerifyTokenResult =
   | {
       success: true;
       tokenData: string;
+      expiresAt: number;
     }
   | {
       success: false;
-      expired: true;
+      expired: boolean;
     };
 
-export const verifyToken = (
-  token: string,
-  tokenType: TOKEN,
-): VerifyTokenResult => {
+export const verifyToken = (token: string): VerifyTokenResult => {
   try {
-    // check the token type and get secret
-    const secret =
-      tokenType === TOKEN.REFRESH_TOKEN
-        ? (process.env.JWT_REFRESH_SECRET as string)
-        : (process.env.JWT_ACCESS_SECRET as string);
-    // verify token
-    const decoded = jwt.verify(token, secret) as JwtPayload;
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_ACCESS_SECRET as string,
+    ) as JwtPayload;
 
     return {
       success: true,
       tokenData: decoded.id,
+      expiresAt: decoded.exp as number,
     };
   } catch (err: unknown) {
     if (err instanceof jwt.TokenExpiredError) {
@@ -39,6 +30,10 @@ export const verifyToken = (
         expired: true,
       };
     }
-    throw err;
+
+    return {
+      success: false,
+      expired: false,
+    };
   }
 };
