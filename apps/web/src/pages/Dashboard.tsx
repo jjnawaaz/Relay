@@ -351,7 +351,17 @@ export function Dashboard() {
 
                     <Link
                       to={`/rooms/${room.id}`}
-                      className="mt-6 flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                      className="
+                        mt-6 flex h-10 w-full items-center justify-center
+                        rounded-md px-4 py-2 text-sm font-medium
+                        bg-primary text-primary-foreground
+                        transition-all duration-300
+                        hover:-translate-y-0.5
+                        hover:bg-primary/90
+                        dark:hover:bg-accent
+                        dark:hover:text-accent-foreground
+                        dark:hover:shadow-[0_0_20px_hsl(var(--accent)/0.2)]
+                      "
                     >
                       Join room
                     </Link>
