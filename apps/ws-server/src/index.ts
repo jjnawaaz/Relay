@@ -14,8 +14,18 @@ import { AuthDataSchema } from "@repo/api_contracts";
 // setup express
 const app = express();
 
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  process.env.FRONTEND_PRODUCTION_URL,
+].filter(Boolean) as string[];
+
 // cors
-app.use(cors());
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  }),
+);
 
 // health check
 app.get("/health", (req, res) => {
