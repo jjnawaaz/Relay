@@ -6,6 +6,9 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "scripts": {
+    "dev": "tsx src/index.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/ioredis": "^5.0.0"
