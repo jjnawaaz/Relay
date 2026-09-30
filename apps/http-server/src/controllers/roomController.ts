@@ -7,10 +7,24 @@ import {
 import { Request, Response } from "express";
 import { deleteRoomSchema, roomSchema } from "@repo/api_contracts";
 
-export const getRooms = async (_req: Request, res: Response) => {
-  const data = await GetRoomService();
+export const getRooms = async (req: Request, res: Response) => {
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 6;
+  const search = String(req.query.search || "").trim();
+
+  const safePage = Math.max(page, 1);
+  const safeLimit = Math.min(Math.max(limit, 1), 50);
+
+  const data = await GetRoomService(safePage, safeLimit, search);
+
   return res.status(httpStatusCodes.OK).json({
-    rooms: data,
+    rooms: data.rooms,
+    pagination: {
+      page: safePage,
+      limit: safeLimit,
+      totalRooms: data.totalRooms,
+      totalPages: data.totalPages,
+    },
   });
 };
 

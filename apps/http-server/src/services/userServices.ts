@@ -66,9 +66,42 @@ export const SignInService = async (data: SigninType) => {
   };
 };
 
-export const GetRoomService = async () => {
-  const rooms = await prisma.room.findMany();
-  return rooms;
+export const GetRoomService = async (
+  page: number,
+  limit: number,
+  search: string,
+) => {
+  const skip = (page - 1) * limit;
+
+  const where = search
+    ? {
+        room_name: {
+          contains: search,
+          mode: "insensitive" as const,
+        },
+      }
+    : {};
+
+  const [rooms, totalRooms] = await Promise.all([
+    prisma.room.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+
+    prisma.room.count({
+      where,
+    }),
+  ]);
+
+  return {
+    rooms,
+    totalRooms,
+    totalPages: Math.ceil(totalRooms / limit),
+  };
 };
 
 export const CreateRoomService = async (user: any, room_data: any) => {
