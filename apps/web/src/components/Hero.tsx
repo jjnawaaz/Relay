@@ -154,14 +154,17 @@ export function Hero() {
             transition={{ delay: 0.4, duration: 0.6 }}
             className="mt-8 flex flex-col gap-3 sm:flex-row"
           >
-            <Button size="lg" className="h-12 rounded-full px-8 text-base">
+            <Button
+              size="lg"
+              className="h-12 rounded-full px-8 text-base transition-all duration-300 hover:-translate-y-0.5 hover:bg-accent/80 dark:hover:bg-accent dark:hover:text-accent-foreground"
+            >
               Get started
             </Button>
 
             <Button
               size="lg"
               variant="outline"
-              className="h-12 rounded-full px-8 text-base"
+              className="h-12 rounded-full px-8 text-base transition-all duration-300 hover:-translate-y-0.5 hover:border-accent hover:bg-accent hover:text-accent-foreground dark:hover:border-accent dark:hover:bg-accent dark:hover:text-accent-foreground"
             >
               Learn more
             </Button>
