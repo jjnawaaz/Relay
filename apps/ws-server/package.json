@@ -1,19 +1,19 @@
 {
   "name": "ws-server",
-  "module": "index.ts",
   "type": "module",
   "private": true,
+ 
   "scripts": {
     "build": "tsc -b",
-    "start": "tsc -c && node dist/index.js",
-    "dev": "tsx src/index.ts"
+    "start": "node dist/server.js",
+    "dev": "tsx src/server.ts"
   },
   "devDependencies": {
     "@repo/codes": "workspace:*",
     "@repo/db": "workspace:*",
     "@repo/redis": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@repo/api_contracts":"workspace:*",
+    "@repo/api_contracts": "workspace:*",
     "@types/bun": "latest",
     "@types/cookie": "^1.0.0",
     "@types/cors": "^2.8.19",

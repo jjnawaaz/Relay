@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import { createServer } from "node:http";
 import { WebSocketServer } from "ws";
 import type { IncomingMessage } from "node:http";
 import { authHandler_v1 } from "./middlewares/authHandler.js";
@@ -13,16 +14,21 @@ import { ROOMS } from "./store/rooms.js";
 
 // setup express
 const app = express();
-const httpServer = app.listen(process.env.PORT);
 
 // cors
 app.use(cors());
 
-// setup ws
-const wss = new WebSocketServer({ server: httpServer });
-
+// health check
 app.get("/health", (req, res) => {
   res.send("WS server is good ");
+});
+
+// create HTTP server
+const httpServer = createServer(app);
+
+// setup WebSocket server
+const wss = new WebSocketServer({
+  server: httpServer,
 });
 
 // generate websocket server unique Id
@@ -34,9 +40,11 @@ subscriber.on("message", async (channel, string) => {
   const payloadData = JSON.parse(string);
 
   if (payloadData.serverId === WS_SERVER_ID) return;
+
   ROOMS.get(payloadData.roomId)?.forEach((socket) => {
     socket.send(payloadData.message);
   });
+
   return;
 });
 
@@ -44,6 +52,7 @@ subscriber.on("message", async (channel, string) => {
 wss.on("connection", async (socket, req: IncomingMessage) => {
   // validate jwt here
   const isValid = await authHandler_v1(req);
+
   if (!isValid.success) {
     socket.send(
       isValid.reason === "ACCESS_TOKEN_EXPIRED"
@@ -59,18 +68,21 @@ wss.on("connection", async (socket, req: IncomingMessage) => {
   socket.on("message", (data) => {
     // check type of room
     let parsedData;
+
     try {
       parsedData = JSON.parse(data.toString()) as SocketData;
-      // continue processing
     } catch (err) {
       socket.send("Invalid message format");
       return;
     }
+
     parsedData = SocketDataSchema.safeParse(parsedData);
+
     if (!parsedData.success) {
       socket.send("Invalid message format");
       return;
     }
+
     messageController(isValid.userId, parsedData.data, socket);
   });
 
@@ -81,3 +93,6 @@ wss.on("connection", async (socket, req: IncomingMessage) => {
     }
   });
 });
+
+// IMPORTANT: Vercel needs the server exported
+export default httpServer;
