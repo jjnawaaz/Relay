@@ -9,7 +9,7 @@
   <img src="https://img.shields.io/badge/TypeScript-7.0-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Express-5.x-000000?logo=express&logoColor=white" alt="Express" />
   <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black" alt="React" />
-  <img src="https://img.shields.io/badge/Prisma-8-2D3748?logo=prisma&logoColor=white" alt="Prisma" />
+  <img src="https://img.shields.io/badge/Prisma-7-2D3748?logo=prisma&logoColor=white" alt="Prisma" />
   <img src="https://img.shields.io/badge/Redis-Streams%20%2B%20Pub%2FSub-DC382D?logo=redis&logoColor=white" alt="Redis" />
   <img src="https://img.shields.io/badge/Turborepo-2.x-EF4444?logo=turborepo&logoColor=white" alt="Turborepo" />
   <img src="https://img.shields.io/badge/Bun-1.4-F9F1E1?logo=bun&logoColor=black" alt="Bun" />
@@ -67,7 +67,7 @@ graph TB
     end
 
     subgraph "Frontend (Vite + React)"
-        WEB["web<br/>React 19 · Vite · TailwindCSS<br/>Zustand · React Query"]
+        WEB["web<br/>React 19 · Vite · TailwindCSS<br/>Zustand · Axios"]
     end
 
     subgraph "Backend Services"
@@ -86,7 +86,7 @@ graph TB
     end
 
     subgraph "Database"
-        PG["PostgreSQL<br/>Users · Rooms · Chats<br/>Prisma 8 ORM"]
+        PG["PostgreSQL<br/>Users · Rooms · Chats<br/>Prisma 7 ORM"]
     end
 
     C1 & C2 & C3 --> WEB
@@ -199,13 +199,13 @@ The WS server authenticates via the **first message** after connection — the c
 | Layer | Technology |
 |---|---|
 | **Monorepo** | Turborepo 2.x + Bun workspaces |
-| **Frontend** | React 19, Vite 8, TailwindCSS 3, Zustand, React Query, Framer Motion, GSAP |
+| **Frontend** | React 19, Vite 8, TailwindCSS 3, Zustand, Axios, Framer Motion, GSAP |
 | **HTTP API** | Express 5, bcrypt, JWT (access + refresh tokens), express-rate-limit |
 | **WebSocket** | Node.js `ws` library, Express HTTP server upgrade |
 | **Message Broker** | Redis Pub/Sub (ioredis 6) — cross-instance message fan-out |
 | **Message Queue** | Redis Streams — durable, ordered event log with consumer groups |
 | **Worker** | Standalone Node.js process — drains Redis Streams → PostgreSQL |
-| **Database** | PostgreSQL (>= 15) via Prisma 8 with `@prisma/adapter-pg` |
+| **Database** | PostgreSQL (>= 15) via Prisma 7 with `@prisma/adapter-pg` |
 | **Validation** | Zod 4 — shared schemas across frontend, backend, and WebSocket layer |
 | **Language** | TypeScript 7 throughout |
 
@@ -242,7 +242,7 @@ The client-side application built with **React 19** and **Vite**.
 |---|---|
 | Routing | `react-router-dom` v7 (Home, SignIn, SignUp, Dashboard, Room) |
 | State | Zustand store for auth state |
-| Data fetching | TanStack React Query + Axios |
+| Data fetching | Axios (centralized instance with interceptors) |
 | Styling | TailwindCSS 3 + Framer Motion + GSAP + Lenis smooth scroll |
 | Forms | React Hook Form + Zod resolvers |
 | Protected routes | `ProtectedRoute` component wrapping authenticated pages |
@@ -292,7 +292,7 @@ A standalone long-running process that drains the `chat-events` Redis Stream int
 |---|---|---|
 | `@repo/api_contracts` | API Contracts | Zod schemas shared across frontend + backend — `SignupSchema`, `SigninSchema`, `roomSchema`, `SocketDataSchema`, `AuthDataSchema`, `TokenExpiringSchema` |
 | `@repo/codes` | Codes | Centralized HTTP status codes and application error codes (`ERROR_CODES`) — type-safe constants used by both `http-server` and `ws-server` |
-| `@repo/db` | Database | Prisma 8 client setup using `@prisma/adapter-pg` with connection string config, singleton pattern for dev, schema + migrations + seed script |
+| `@repo/db` | Database | Prisma 7 client setup using `@prisma/adapter-pg` with connection string config, singleton pattern for dev, schema + migrations + seed script |
 | `@repo/redis` | Redis | ioredis client factory exporting three connections: `redis` (streams), `publisher` (Pub/Sub publish), `subscriber` (Pub/Sub subscribe) — with singleton caching in dev |
 | `ui` | UI | Shared React component library |
 | `eslint-config` | ESLint Config | Shared linting rules |
