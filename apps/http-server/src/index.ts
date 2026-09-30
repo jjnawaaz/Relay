@@ -11,9 +11,9 @@ import { apiRateLimiter } from "./middlewares/rateLimiter.js";
 
 const app: Express = express();
 
-// PORT
-const PORT = process.env.PORT;
+app.set("trust proxy", 1);
 
+// Allowed URLs
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   process.env.FRONTEND_PRODUCTION_URL,
