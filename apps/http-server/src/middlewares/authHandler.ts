@@ -67,7 +67,7 @@ export const authHandler = (
 
   // create new token
   const new_access_token = createToken(
-    refresh_decoded as JwtData,
+    refresh_decoded.tokenData as JwtData,
     TOKEN.ACCESS_TOKEN,
   );
 
