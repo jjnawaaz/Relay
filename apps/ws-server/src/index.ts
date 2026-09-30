@@ -2,15 +2,14 @@ import express from "express";
 import cors from "cors";
 import { createServer } from "node:http";
 import { WebSocketServer } from "ws";
-import type { IncomingMessage } from "node:http";
-import { authHandler_v1 } from "./middlewares/authHandler.js";
-import { SocketData } from "./types/socketType.js";
+import { authHandler } from "./middlewares/authHandler.js";
 import { messageController } from "./controllers/messageController.js";
 import { SocketDataSchema } from "@repo/api_contracts";
 import "dotenv/config";
 import { randomUUID } from "node:crypto";
 import { subscriber } from "@repo/redis";
 import { ROOMS } from "./store/rooms.js";
+import { AuthDataSchema } from "@repo/api_contracts";
 
 // setup express
 const app = express();
@@ -49,48 +48,83 @@ subscriber.on("message", async (channel, string) => {
 });
 
 // web socket server
-wss.on("connection", async (socket, req: IncomingMessage) => {
-  // validate jwt here
-  const isValid = await authHandler_v1(req);
-
-  if (!isValid.success) {
-    socket.send(
-      isValid.reason === "ACCESS_TOKEN_EXPIRED"
-        ? "Access Token Expired"
-        : "Authentication Failed",
-    );
-
-    socket.close();
-    return;
-  }
-
-  // tokens are valid
-  socket.on("message", (data) => {
-    // check type of room
-    let parsedData;
+wss.on("connection", (socket) => {
+  socket.once("message", (data) => {
+    let rawData: unknown;
 
     try {
-      parsedData = JSON.parse(data.toString()) as SocketData;
-    } catch (err) {
-      socket.send("Invalid message format");
+      rawData = JSON.parse(data.toString());
+    } catch {
+      socket.send("Invalid authentication message");
+      socket.close();
       return;
     }
 
-    parsedData = SocketDataSchema.safeParse(parsedData);
+    const authData = AuthDataSchema.safeParse(rawData);
 
-    if (!parsedData.success) {
-      socket.send("Invalid message format");
+    if (!authData.success) {
+      socket.send("Authentication required");
+      socket.close();
       return;
     }
 
-    messageController(isValid.userId, parsedData.data, socket);
-  });
+    const isValid = authHandler(authData.data.token);
 
-  // close socket
-  socket.on("close", (code, reason) => {
-    if (code === 1005) {
-      console.log("Socket actually closed:", code, "Authentication Failed");
+    if (!isValid.success) {
+      socket.send(
+        isValid.reason === "ACCESS_TOKEN_EXPIRED"
+          ? "Access Token Expired"
+          : "Authentication Failed",
+      );
+
+      socket.close();
+      return;
     }
+
+    // check expiry and send message
+    const expiresIn = isValid.expiresAt * 1000 - Date.now();
+
+    const warningTime = expiresIn - 60_000;
+
+    const tokenExpiryTimer = setTimeout(
+      () => {
+        if (socket.readyState === socket.OPEN) {
+          socket.send(
+            JSON.stringify({
+              type: "TOKEN_EXPIRING",
+              expiresIn: 60,
+            }),
+          );
+        }
+      },
+      Math.max(warningTime, 0),
+    );
+
+    socket.on("close", () => {
+      clearTimeout(tokenExpiryTimer);
+    });
+
+    const userId = isValid.userId;
+
+    socket.on("message", (data) => {
+      let parsedData: unknown;
+
+      try {
+        parsedData = JSON.parse(data.toString());
+      } catch {
+        socket.send("Invalid message format");
+        return;
+      }
+
+      const result = SocketDataSchema.safeParse(parsedData);
+
+      if (!result.success) {
+        socket.send("Invalid message format");
+        return;
+      }
+
+      messageController(userId, result.data, socket);
+    });
   });
 });
 
