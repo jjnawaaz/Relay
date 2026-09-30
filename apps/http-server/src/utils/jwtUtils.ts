@@ -12,15 +12,15 @@ export enum TOKEN {
 
 export const access_token_options = {
   httpOnly: true,
-  secure: process.env.NODE_ENV == "production" ? true : false,
-  sameSite: "lax",
+  secure: true,
+  sameSite: "none" as const,
   maxAge: 1000 * 60 * 15,
 };
 
 export const refresh_token_options = {
   httpOnly: true,
-  secure: process.env.NODE_ENV == "production" ? true : false,
-  sameSite: "lax",
+  secure: true,
+  sameSite: "none" as const,
   maxAge: 1000 * 60 * 60 * 24 * 7,
 };
 
