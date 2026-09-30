@@ -13,7 +13,7 @@ export function Hero() {
 
     if (!textElement || !cursorElement) return;
 
-    const text = "Chat";
+    const text = "Chat.";
 
     const ctx = gsap.context(() => {
       const timeline = gsap.timeline();
