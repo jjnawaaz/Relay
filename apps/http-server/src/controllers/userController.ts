@@ -4,11 +4,11 @@ import { httpStatusCodes } from "@repo/codes";
 import {
   access_token_options,
   createToken,
+  JwtData,
   refresh_token_options,
   TOKEN,
 } from "../utils/jwtUtils.js";
 import { SignInService, SignUpService } from "../services/userServices.js";
-import { redis } from "@repo/redis";
 
 export const signUp = async (req: Request, res: Response) => {
   // validate the data
@@ -52,17 +52,18 @@ export const signIn = async (req: Request, res: Response) => {
     refresh_token,
     refresh_token_options as CookieOptions,
   );
-  // add signin user to redis set
-  await redis.sadd("logged_user_id", user.id);
 
   return res.status(httpStatusCodes.OK).json({
     message: "User successfully Signed In",
+    token: access_token,
   });
 };
 
-export const refreshToken = (_req: Request, res: Response) => {
+export const refreshToken = (req: Request, res: Response) => {
+  const access_token = createToken(req.user as JwtData, TOKEN.ACCESS_TOKEN);
   return res.json({
     message: "User refreshed successfully",
     success: true,
+    token: access_token,
   });
 };
