@@ -7,14 +7,28 @@ import "dotenv/config";
 import userRoutes from "./routes/userRoutes.js";
 import roomRoutes from "./routes/roomRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
+import { apiRateLimiter } from "./middlewares/rateLimiter.js";
 
 const app: Express = express();
 
 // PORT
 const PORT = process.env.PORT;
 
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  process.env.FRONTEND_PRODUCTION_URL,
+].filter(Boolean) as string[];
+
 // cors
-app.use(cors());
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  }),
+);
+
+// rate limiter
+app.use(apiRateLimiter);
 
 // cookie-parser
 app.use(cookieparser());
