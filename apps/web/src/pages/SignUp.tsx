@@ -3,15 +3,19 @@ import { motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SignupSchema, type SignupType } from "@repo/api_contracts";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { api } from "@/lib/axios";
 
 export function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
+
+  const navigate = useNavigate();
 
   const {
     register,
@@ -22,9 +26,17 @@ export function SignUp() {
   });
 
   const onSubmit = async (data: SignupType) => {
-    console.log(data);
+    try {
+      await api.post("/user/signup", data);
 
-    // Axios API call will come here
+      toast.success("Account created successfully");
+
+      navigate("/signin");
+    } catch (error) {
+      console.error("Signup failed:", error);
+
+      toast.error("Failed to create account");
+    }
   };
 
   return (
