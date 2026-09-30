@@ -3,15 +3,19 @@ import { motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SigninSchema, type SigninType } from "@repo/api_contracts";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { api } from "@/lib/axios";
+import { useAuthStore } from "@/stores/authStore";
 
 export function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
+  const { setAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
 
   const {
     register,
@@ -22,9 +26,17 @@ export function SignIn() {
   });
 
   const onSubmit = async (data: SigninType) => {
-    console.log(data);
+    try {
+      const response = await api.post("/user/signin", data);
 
-    // Axios API call will come here
+      const { token } = response.data;
+
+      sessionStorage.setItem("accessToken", token);
+      setAuthenticated(true);
+      navigate("/");
+    } catch (error) {
+      console.error("Sign in failed:", error);
+    }
   };
 
   return (
@@ -61,7 +73,6 @@ export function SignIn() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            {/* Email */}
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">
                 Email
@@ -83,7 +94,6 @@ export function SignIn() {
               )}
             </div>
 
-            {/* Password */}
             <div className="space-y-2">
               <label htmlFor="password" className="text-sm font-medium">
                 Password
@@ -119,7 +129,6 @@ export function SignIn() {
               )}
             </div>
 
-            {/* Forgot password */}
             <div className="flex justify-end">
               <button
                 type="button"
@@ -129,7 +138,6 @@ export function SignIn() {
               </button>
             </div>
 
-            {/* Submit */}
             <Button
               type="submit"
               disabled={isSubmitting}
@@ -139,7 +147,6 @@ export function SignIn() {
             </Button>
           </form>
 
-          {/* Signup */}
           <p className="mt-8 text-center text-sm text-muted-foreground">
             Don't have an account?{" "}
             <Link
