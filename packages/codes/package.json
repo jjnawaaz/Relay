@@ -1,11 +1,18 @@
 {
   "name": "@repo/codes",
-  "module": "index.ts",
   "type": "module",
-  "exports":{
-    ".":"./src/index.ts"
-  },
   "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },

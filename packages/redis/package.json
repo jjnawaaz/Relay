@@ -1,21 +1,32 @@
 {
   "name": "@repo/redis",
-  "module": "index.ts",
   "type": "module",
   "private": true,
+
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
+
   "scripts": {
+    "build": "tsc -b",
     "dev": "tsx src/index.ts"
   },
+
   "devDependencies": {
     "@types/bun": "latest",
     "@types/ioredis": "^5.0.0"
   },
+
   "peerDependencies": {
     "typescript": "^7"
   },
+
   "dependencies": {
     "dotenv": "^18.0.4",
     "ioredis": "^6.0.0"

@@ -1,10 +1,17 @@
 {
   "name": "@repo/api_contracts",
-  "module": "index.ts",
   "type": "module",
   "private": true,
-  "exports":{
-    ".":"./src/index.ts"
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b"
   },
   "devDependencies": {
     "@types/bun": "latest"
