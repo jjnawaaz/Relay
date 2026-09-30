@@ -1,16 +1,42 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Moon, Sun } from "lucide-react";
+import { LogOut, Moon, Sun } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+
+import { useAuthStore } from "@/stores/authStore";
+import { api } from "@/lib/axios";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+
   const { theme, toggleTheme } = useTheme();
+
+  const { isAuthenticated, logout } = useAuthStore();
+
+  const navigate = useNavigate();
 
   const closeMenu = () => {
     setIsOpen(false);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await api.post("/user/logout");
+
+      logout();
+      closeMenu();
+
+      toast.success("Logged out successfully");
+
+      navigate("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+
+      toast.error("Failed to logout");
+    }
   };
 
   return (
@@ -37,6 +63,7 @@ export function Navbar() {
           >
             <Link to="/dashboard">Dashboard</Link>
           </Button>
+
           <Button
             variant="ghost"
             className="text-muted-foreground hover:text-foreground"
@@ -46,16 +73,29 @@ export function Navbar() {
             {theme === "dark" ? <Sun /> : <Moon />}
           </Button>
 
-          <Button
-            variant="ghost"
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <Link to="/signin">Login</Link>
-          </Button>
+          {isAuthenticated ? (
+            <Button
+              variant="ghost"
+              onClick={handleLogout}
+              className="gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className="size-4" />
+              Logout
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="ghost"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Link to="/signin">Login</Link>
+              </Button>
 
-          <Button className="rounded-full px-5">
-            <Link to="/signup">Signup</Link>
-          </Button>
+              <Button className="rounded-full px-5">
+                <Link to="/signup">Signup</Link>
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Mobile controls */}
@@ -154,37 +194,52 @@ export function Navbar() {
               ease: "easeOut",
             }}
             className="
-        absolute inset-x-0 top-0 -z-10
-        border-b border-border
-        bg-background/95
-        px-6 pb-6 pt-24
-        backdrop-blur-xl
-        shadow-[0_8px_20px_rgba(0,0,0,0.12)]
-        dark:shadow-[0_8px_20px_rgba(0,0,0,0.35)]
-        md:hidden
-      "
+              absolute inset-x-0 top-0 -z-10
+              border-b border-border
+              bg-background/95
+              px-6 pb-6 pt-24
+              backdrop-blur-xl
+              shadow-[0_8px_20px_rgba(0,0,0,0.12)]
+              dark:shadow-[0_8px_20px_rgba(0,0,0,0.35)]
+              md:hidden
+            "
           >
             <div className="flex flex-col gap-2">
               <Button
                 variant="ghost"
                 className="text-muted-foreground hover:text-foreground"
+                onClick={closeMenu}
               >
                 <Link to="/dashboard">Dashboard</Link>
               </Button>
-              <Button
-                variant="ghost"
-                className="h-12 justify-center text-base shadow-none"
-                onClick={closeMenu}
-              >
-                <Link to="/signin">Login</Link>
-              </Button>
 
-              <Button
-                className="h-12 justify-center rounded-full text-base shadow-none"
-                onClick={closeMenu}
-              >
-                <Link to="/signup">Signup</Link>
-              </Button>
+              {isAuthenticated ? (
+                <Button
+                  variant="ghost"
+                  className="h-12 justify-center gap-2 text-base text-muted-foreground shadow-none hover:text-foreground"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="size-4" />
+                  Logout
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    variant="ghost"
+                    className="h-12 justify-center text-base shadow-none"
+                    onClick={closeMenu}
+                  >
+                    <Link to="/signin">Login</Link>
+                  </Button>
+
+                  <Button
+                    className="h-12 justify-center rounded-full text-base shadow-none"
+                    onClick={closeMenu}
+                  >
+                    <Link to="/signup">Signup</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </motion.div>
         )}
