@@ -28,7 +28,9 @@ const messages = [
 export function Room() {
   const { roomId } = useParams();
 
-  const roomName = roomId?.charAt(0).toUpperCase() + roomId?.slice(1);
+  const roomName = roomId
+    ? roomId.charAt(0).toUpperCase() + roomId.slice(1)
+    : "Room";
 
   return (
     <main className="flex min-h-screen flex-col bg-background text-foreground">
@@ -36,16 +38,11 @@ export function Room() {
       <header className="border-b border-border">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <Button
-              asChild
-              variant="ghost"
-              size="icon"
-              className="rounded-full"
-            >
-              <Link to="/dashboard">
+            <Link to="/dashboard">
+              <Button variant="ghost" size="icon" className="rounded-full">
                 <ArrowLeft className="size-5" />
-              </Link>
-            </Button>
+              </Button>
+            </Link>
 
             <div>
               <h1 className="font-semibold">{roomName}</h1>
