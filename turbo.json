@@ -5,7 +5,7 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**"]
+      "outputs": ["dist/**"]
     },
     "lint": {
       "dependsOn": ["^lint"]
@@ -16,14 +16,6 @@
     "dev": {
       "cache": false,
       "persistent": true
-    },
-     "scripts": { 
-    "dev": "bun run --filter web dev", 
-    "build": "bun run --filter database contract:emit && bun run --filter web build", 
-    "start": "bun run --filter web start", 
-    "db:init": "bun run --filter database db:init", 
-    "db:update": "bun run --filter database db:update", 
-    "seed": "bun run --filter database db:seed"
-  } 
+    }
   }
 }
