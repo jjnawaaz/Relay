@@ -27,7 +27,7 @@ app.use("/user", userRoutes);
 app.use("/room", roomRoutes);
 
 // health
-app.get("/health", (req: Request, res: Response) => {
+app.get("/health", (_req: Request, res: Response) => {
   res.send("All working good");
 });
 
