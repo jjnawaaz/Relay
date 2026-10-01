@@ -11,7 +11,7 @@ const router: Router = express.Router();
 
 router.post("/create-room", authHandler, createRoomRateLimiter, createRoom);
 router.get("/get-room", getRooms);
-router.get("/:roomId/chats", getRoomChats);
+router.get("/:roomId/chats", authHandler, getRoomChats);
 router.delete("/delete-room/:id", authHandler, deleteRoom);
 
 export default router;
