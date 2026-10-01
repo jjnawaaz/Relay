@@ -2,8 +2,9 @@ import { httpStatusCodes } from "@repo/codes";
 import {
   CreateRoomService,
   DeleteRoomService,
+  getRoomChatsService,
   GetRoomService,
-} from "../services/userServices.js";
+} from "../services/roomServices.js";
 import { Request, Response } from "express";
 import { deleteRoomSchema, roomSchema } from "@repo/api_contracts";
 
@@ -64,4 +65,19 @@ export const deleteRoom = async (req: Request, res: Response) => {
       message: "Room deleted successfully",
     });
   }
+};
+
+export const getRoomChats = async (req: Request, res: Response) => {
+  const roomId = Number(req.params.roomId);
+  const cursor = req.query.cursor ? Number(req.query.cursor) : undefined;
+  const limit = req.query.limit ? Number(req.query.limit) : 30;
+  const result = await getRoomChatsService({
+    roomId,
+    cursor,
+    limit,
+  });
+  return res.status(200).json({
+    success: true,
+    data: result,
+  });
 };
