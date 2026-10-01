@@ -7,15 +7,18 @@ type AuthState = {
 };
 
 export const useAuthStore = create<AuthState>((set) => ({
-  isAuthenticated: false,
+  isAuthenticated: !!sessionStorage.getItem("accessToken"),
 
   setAuthenticated: (value) =>
     set({
       isAuthenticated: value,
     }),
 
-  logout: () =>
+  logout: () => {
+    sessionStorage.removeItem("accessToken");
+
     set({
       isAuthenticated: false,
-    }),
+    });
+  },
 }));
