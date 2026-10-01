@@ -11,6 +11,7 @@ import { Room } from "@/pages/Room";
 import { SignIn } from "@/pages/SignIn";
 import { SignUp } from "@/pages/SignUp";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { GuestRoute } from "./components/GuestRoute";
 
 function Home() {
   return (
@@ -42,12 +43,15 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
 
-        <Route path="/signin" element={<SignIn />} />
-
-        <Route path="/signup" element={<SignUp />} />
+        {/* Guest-only routes */}
+        <Route element={<GuestRoute />}>
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/signup" element={<SignUp />} />
+        </Route>
 
         <Route path="/dashboard" element={<Dashboard />} />
 
+        {/* Authenticated routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="/rooms/:roomId" element={<Room />} />
         </Route>
