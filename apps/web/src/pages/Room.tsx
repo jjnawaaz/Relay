@@ -12,6 +12,25 @@ type Message = {
   time: string;
 };
 
+type ChatResponse = {
+  success: boolean;
+  data: {
+    chats: {
+      id: number;
+      eventId: string;
+      message: string;
+      userId: string;
+      user: {
+        id: string;
+        name: string;
+      };
+      createdAt: string;
+    }[];
+    nextCursor: number | null;
+    hasMore: boolean;
+  };
+};
+
 export function Room() {
   const { roomId } = useParams();
 
@@ -21,10 +40,147 @@ export function Room() {
   const [isConnected, setIsConnected] = useState(false);
   const [isInRoom, setIsInRoom] = useState(false);
 
+  const [nextCursor, setNextCursor] = useState<number | null>(null);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+
   const socketRef = useRef<WebSocket | null>(null);
   const isInRoomRef = useRef(false);
 
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const isLoadingMessagesRef = useRef(false);
+
   const numericRoomId = Number(roomId);
+
+  const fetchMessages = async (cursor?: number) => {
+    if (!roomId || Number.isNaN(numericRoomId)) {
+      return;
+    }
+
+    if (isLoadingMessagesRef.current) {
+      return;
+    }
+
+    try {
+      isLoadingMessagesRef.current = true;
+      setIsLoadingMessages(true);
+
+      const token = sessionStorage.getItem("accessToken");
+
+      if (!token) {
+        console.error("No access token found");
+        return;
+      }
+
+      const params = new URLSearchParams({
+        limit: "30",
+      });
+
+      if (cursor !== undefined) {
+        params.set("cursor", String(cursor));
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/room/${numericRoomId}/chats?${params}`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
+
+      if (!response.ok) {
+        console.error("Failed to fetch messages:", response.status);
+        return;
+      }
+
+      const data: ChatResponse = await response.json();
+
+      if (!data.success) {
+        return;
+      }
+
+      const incomingMessages = data.data.chats.map((chat) => ({
+        id: chat.id,
+        user: chat.user.name,
+        message: chat.message,
+        time: new Date(chat.createdAt).toLocaleTimeString([], {
+          hour: "numeric",
+          minute: "2-digit",
+        }),
+      }));
+
+      if (cursor !== undefined) {
+        setMessages((currentMessages) => [
+          ...incomingMessages,
+          ...currentMessages,
+        ]);
+      } else {
+        setMessages(incomingMessages);
+      }
+
+      setNextCursor(data.data.nextCursor);
+      setHasMoreMessages(data.data.hasMore);
+    } catch (error) {
+      console.error("Failed to fetch room messages:", error);
+    } finally {
+      isLoadingMessagesRef.current = false;
+      setIsLoadingMessages(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!roomId || Number.isNaN(numericRoomId)) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      fetchMessages();
+    }, 0);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [roomId]);
+
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    const handleScroll = () => {
+      if (container.scrollTop > 50) {
+        return;
+      }
+
+      if (!hasMoreMessages || nextCursor === null) {
+        return;
+      }
+
+      if (isLoadingMessagesRef.current) {
+        return;
+      }
+
+      const previousScrollHeight = container.scrollHeight;
+      const previousScrollTop = container.scrollTop;
+
+      fetchMessages(nextCursor).then(() => {
+        requestAnimationFrame(() => {
+          const newScrollHeight = container.scrollHeight;
+
+          container.scrollTop =
+            newScrollHeight - previousScrollHeight + previousScrollTop;
+        });
+      });
+    };
+
+    container.addEventListener("scroll", handleScroll);
+
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+    };
+  }, [nextCursor, hasMoreMessages]);
 
   useEffect(() => {
     if (!roomId || Number.isNaN(numericRoomId)) {
@@ -241,8 +397,24 @@ export function Room() {
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto">
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 px-6 py-8">
+          {hasMoreMessages && messages.length > 0 && (
+            <div className="flex justify-center">
+              <Button
+                variant="ghost"
+                disabled={isLoadingMessages}
+                onClick={() => {
+                  if (nextCursor !== null) {
+                    fetchMessages(nextCursor);
+                  }
+                }}
+              >
+                {isLoadingMessages ? "Loading..." : "Load older messages"}
+              </Button>
+            </div>
+          )}
+
           {messages.map((message) => (
             <div key={message.id} className="flex gap-3">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-sm font-semibold text-accent">
