@@ -141,7 +141,7 @@ export function SignIn() {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="h-12 w-full rounded-xl text-base"
+              className="h-12 w-full rounded-xl text-base transition-colors dark:hover:bg-accent dark:hover:text-accent-foreground"
             >
               {isSubmitting ? "Signing in..." : "Sign in"}
             </Button>
